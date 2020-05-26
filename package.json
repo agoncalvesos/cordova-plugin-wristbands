@@ -1,0 +1,19 @@
+{
+  "name": "com.outsystems.wristbandsplugin",
+  "version": "0.0.1",
+  "description": "Minew B6 & B7 cordova plugin",
+  "cordova": {
+    "id": "com.outsystems.wristbandsplugin",
+    "platforms": [
+      "ios",
+      "android"
+    ]
+  },
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-ios",
+    "cordova-android"
+  ],
+  "author": "Andre Grillo",
+  "license": "ISC"
+}

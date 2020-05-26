@@ -1,0 +1,69 @@
+<?xml version='1.0' encoding='utf-8'?>
+<plugin id="cordova-plugin-wristbands" version="0.1.0" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+    <name>WristbandsPlugin</name>
+    <js-module name="B6B7Wristbands" src="www/B6B7Wristbands.js">
+        <clobbers target="cordova.plugins.wristband" />
+    </js-module>
+    <platform name="ios">
+        <!-- MinewBeacon B6 SDK -->
+        <source-file src="src/ios/sdk/libMinewBeacon.a" framework="true" />
+        <header-file src="src/ios/sdk/MinewBeaconManager.h" />
+        <header-file src="src/ios/sdk/MinewBeaconValue.h" />
+        <header-file src="src/ios/sdk/MinewBeacon.h" />
+        <!-- <framework src="src/ios/sdk/libMinewBeacon.a" custom="true" /> -->
+
+        <!-- Native code -->
+        <source-file src="src/ios/WristbandsPlugin.m" />
+
+        <!-- iOS Frameworks -->
+        <framework src="CoreBluetooth.framework" />
+
+        <!-- Privacy Settings-->
+        <config-file parent="NSBluetoothPeripheralUsageDescription" target="*-Info.plist">
+            <string>This app requires bluetooth access to monitor Range devices.</string>
+        </config-file>
+        <config-file parent="NSBluetoothAlwaysUsageDescription" target="*-Info.plist">
+            <string>This app requires bluetooth access to monitor Range devices on the background.</string>
+        </config-file>
+        <config-file parent="NSLocationAlwaysAndWhenInUseUsageDescription" target="*-Info.plist">
+            <string>Required for Ranging.</string>
+        </config-file>
+        <config-file parent="NSLocationAlwaysUsageDescription" target="*-Info.plist">
+            <string>Required for Ranging.</string>
+        </config-file>
+        <config-file parent="NSLocationWhenInUseUsageDescription" target="*-Info.plist">
+            <string>Required for Ranging.</string>
+        </config-file>
+
+        <config-file target="*-Info.plist" parent="UIBackgroundModes">
+        <array>
+            <string>bluetooth-central</string>
+            <string>location</string>
+        </array>
+        </config-file>
+
+        <config-file parent="/*" target="config.xml">
+            <feature name="WristbandsPlugin">
+                <param name="ios-package" value="WristbandsPlugin" />
+            </feature>
+        </config-file>
+    </platform>
+    <platform name="android">
+        <config-file parent="/*" target="res/xml/config.xml">
+            <feature name="WristbandsPlugin">
+                <param name="android-package" value="com.cordova.plugin.wristbands.WristbandsPlugin" />
+            </feature>
+        </config-file>
+        <config-file parent="/*" target="AndroidManifest.xml">
+            <uses-permission android:name="android.permission.BLUETOOTH"/>
+            <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+            <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+            <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
+            <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+            <uses-permission android:name="android.permission.INTERNET"/>
+        </config-file>
+        <source-file src="src/android/WristbandsPlugin.java" target-dir="src/com/cordova/plugin/wristbands" />
+
+        <source-file src="src/android/sdk/minewBeaconScan.jar" target-dir="libs" />
+    </platform>
+</plugin>
