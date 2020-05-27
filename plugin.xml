@@ -54,6 +54,7 @@
                 <param name="android-package" value="com.cordova.plugin.wristbands.WristbandsPlugin" />
             </feature>
         </config-file>
+
         <config-file parent="/*" target="AndroidManifest.xml">
             <uses-permission android:name="android.permission.BLUETOOTH"/>
             <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
@@ -62,8 +63,15 @@
             <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
             <uses-permission android:name="android.permission.INTERNET"/>
         </config-file>
-        <source-file src="src/android/WristbandsPlugin.java" target-dir="src/com/cordova/plugin/wristbands" />
 
-        <source-file src="src/android/sdk/minewBeaconScan.jar" target-dir="libs" />
+        <config-file parent="/manifest/application" target="AndroidManifest.xml">
+            <service android:name="com.cordova.plugin.wristbands.WristbandsService" />
+        </config-file>
+
+        <source-file src="src/android/WristbandsPlugin.java" target-dir="src/com/cordova/plugin/wristbands" />
+        <source-file src="src/android/WristbandsService.java" target-dir="src/com/cordova/plugin/wristbands" />
+
+        <!--<source-file src="src/android/sdk/minewBeaconScan.jar" target-dir="libs" />-->
+        <source-file src="src/android/sdk/minewBeaconAdmin.jar" target-dir="libs" />
     </platform>
 </plugin>

@@ -1,11 +1,7 @@
 package com.cordova.plugin.wristbands;
 
-import com.minew.beacon.BeaconValueIndex;
-import com.minew.beacon.BluetoothState;
-import com.minew.beacon.MinewBeacon;
-import com.minew.beacon.MinewBeaconManager;
-import com.minew.beacon.MinewBeaconManagerListener;
-
+import com.minew.beaconset.BluetoothState;
+import com.minew.beaconset.MinewBeaconManager;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CallbackContext;
 
@@ -13,34 +9,19 @@ import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.Date;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
-
 import android.Manifest;
-import android.app.AlarmManager;
 import android.app.AlertDialog;
-import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.os.Handler;
-import android.text.format.DateFormat;
+import android.preference.PreferenceManager;
 import android.util.Log;
-import android.widget.Toast;
 
 import org.json.JSONObject;
 
@@ -51,11 +32,10 @@ public class WristbandsPlugin extends CordovaPlugin {
 
     private MinewBeaconManager mMinewBeaconManager;
     private boolean isScanning;
-    private boolean beaconInRange;
-
     private static final int PERMISSIONS_REQUEST_FINE_LOCATION = 1;
     private static final int PERMISSIONS_REQUEST_BLUETOOTH = 2;
     private static final int REQUEST_ENABLE_BT = 3;
+    private static final String ACTION_STRING_ACTIVITY = "ToActivity";
     private static CallbackContext callbackContext;
 
     private String wristbandModel;
@@ -66,6 +46,7 @@ public class WristbandsPlugin extends CordovaPlugin {
     private String postURL;
     private int timerString;
     private JSONObject returnJSONParameters;
+    //private Shared Core;
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
@@ -121,26 +102,49 @@ public class WristbandsPlugin extends CordovaPlugin {
                 setDevice();
             }
             else if (wristbandCommand.equals("start")){
-                startScan();
+                //startScan(); //TODO
             } else if (wristbandCommand.equals("stop")){
-                stopScan();
+                //stopScan(); //TODO
             }
+
             return true;
         }
         return false;
     }
 
     private void setDevice(){
+
+        IntentFilter filter = new IntentFilter(ACTION_STRING_ACTIVITY);
+        BroadcastReceiver receiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String value =  intent.getExtras().getString("beaconData");
+                sendSuccess(value);
+            }
+        };
+        cordova.getActivity().registerReceiver(receiver, filter);
+
         if (!hasLocationPermissions() || !hasBluetoothPermissions() )
             requestNeededPermissions();
         else {
             initManager();
 
-            setDelegate();
+            //Core = new Shared(mMinewBeaconManager, trackedUUID, trackedMajor, trackedMinor, postURL, timerString);
+            //Core.setDevice();
 
-            startScan();
+            //Set preferences to be used by the WristbandsSerice
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(cordova.getContext());;
+            SharedPreferences.Editor editor = preferences.edit();
 
-            scheduledTimer();
+            editor.putString("trackedUUID", trackedUUID); // value to store
+            editor.putString("trackedMajor", trackedMajor); // value to store
+            editor.putString("trackedMinor", trackedMinor); // value to store
+            editor.putString("postURL", postURL); // value to store
+            editor.putInt("timerString", timerString); // value to store
+            editor.commit();
+
+            Intent intent = new Intent(cordova.getContext(), WristbandsService.class);
+            cordova.getActivity().startService(intent);
         }
     }
 
@@ -150,165 +154,6 @@ public class WristbandsPlugin extends CordovaPlugin {
         }
 
         mMinewBeaconManager = MinewBeaconManager.getInstance(cordova.getContext());
-    }
-
-    private void startScan(){
-        try {
-            mMinewBeaconManager.startScan();
-            isScanning = true;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void stopScan(){
-        if (mMinewBeaconManager != null) {
-            mMinewBeaconManager.stopScan();
-            isScanning = false;
-        }
-    }
-
-    private void setDelegate() {
-        Log.d("wristband", "setDevice!");
-        mMinewBeaconManager.setDeviceManagerDelegateListener(new MinewBeaconManagerListener() {
-            /**
-             *   if the manager find some new beacon, it will call back this method.
-             *
-             *  @param minewBeacons  new beacons the manager scanned
-             */
-            @Override
-            public void onAppearBeacons(List<MinewBeacon> minewBeacons) {
-                Log.d("wristband", "onAppearBeacons" + minewBeacons.size());
-
-                for (MinewBeacon beacon : minewBeacons){
-
-                    String uuid = beacon.getBeaconValue(BeaconValueIndex.MinewBeaconValueIndex_UUID).getStringValue();
-                    String major = beacon.getBeaconValue(BeaconValueIndex.MinewBeaconValueIndex_Major).getStringValue();
-                    String minor = beacon.getBeaconValue(BeaconValueIndex.MinewBeaconValueIndex_Minor).getStringValue();
-
-
-                    if (trackedUUID.equals(uuid) && trackedMajor.equals(major) && trackedMinor.equals(minor)){
-                        beaconInRange = true;
-                    }
-                }
-                //TODO
-                //if ([trackedUUID isEqualToString:uuid] && [trackedMajor isEqualToString:major] && [trackedMinor isEqualToString:minor]){
-                //    beaconInRange = YES;
-                //}
-
-            }
-
-            /**
-             *  if a beacon didn't update data in 10 seconds, we think this beacon is out of rang, the manager will call back this method.
-             *
-             *  @param minewBeacons beacons out of range
-             */
-            @Override
-            public void onDisappearBeacons(List<MinewBeacon> minewBeacons) {
-                Log.d("wristband", "onDisappearBeacons" + minewBeacons.size());
-
-                for (MinewBeacon beacon : minewBeacons){
-
-                    String uuid = beacon.getBeaconValue(BeaconValueIndex.MinewBeaconValueIndex_UUID).getStringValue();
-                    String major = beacon.getBeaconValue(BeaconValueIndex.MinewBeaconValueIndex_Major).getStringValue();
-                    String minor = beacon.getBeaconValue(BeaconValueIndex.MinewBeaconValueIndex_Minor).getStringValue();
-
-
-                    if (trackedUUID.equals(uuid) && trackedMajor.equals(major) && trackedMinor.equals(minor)){
-                        beaconInRange = false;
-                    }
-                }
-            }
-
-            /**
-             *  the manager calls back this method every 1 seconds, you can get all scanned beacons.
-             *
-             *  @param minewBeacons all scanned beacons
-             */
-            @Override
-            public void onRangeBeacons(final List<MinewBeacon> minewBeacons) {
-                Log.d("wristband", "onRangeBeacons" + minewBeacons.size());
-
-                for (MinewBeacon beacon : minewBeacons){
-
-                    String uuid = beacon.getBeaconValue(BeaconValueIndex.MinewBeaconValueIndex_UUID).getStringValue();
-                    String major = beacon.getBeaconValue(BeaconValueIndex.MinewBeaconValueIndex_Major).getStringValue();
-                    String minor = beacon.getBeaconValue(BeaconValueIndex.MinewBeaconValueIndex_Minor).getStringValue();
-
-
-                    if (trackedUUID.equals(uuid) && trackedMajor.equals(major) && trackedMinor.equals(minor)){
-                        returnJSONParameters = beaconToJSONObject(beacon);
-                        String beaconData = returnJSONParameters.toString();
-                        Log.d("wristband", "onRangeBeacons" + beaconData);
-                        sendSuccess(beaconData);
-                    }
-                }
-            }
-
-                /**
-                 *  the manager calls back this method when BluetoothStateChanged.
-                 *
-                 *  @param state BluetoothState
-                 */
-            @Override
-            public void onUpdateState(BluetoothState state) {
-                switch (state) {
-                    case BluetoothStatePowerOn:
-                        Toast.makeText(cordova.getContext(), "BluetoothStatePowerOn", Toast.LENGTH_SHORT).show();
-                        break;
-                    case BluetoothStatePowerOff:
-                        Toast.makeText(cordova.getContext(), "BluetoothStatePowerOff", Toast.LENGTH_SHORT).show();
-                        beaconInRange = false;
-                        break;
-                }
-            }
-        });
-    }
-
-    public JSONObject beaconToJSONObject(MinewBeacon beacon) {
-
-        JSONObject jo = new JSONObject();
-        try {
-            //RSSI
-            int rssi = beacon.getBeaconValue(BeaconValueIndex.MinewBeaconValueIndex_RSSI).getIntValue();
-            jo.put("rssi", rssi);
-
-            //Distance
-            double powered = (-59.0f-(double)rssi)/20.0;
-            double distance = Math.pow(10, powered);
-            jo.put("distance", distance);
-
-            //UUID address
-            jo.put("uuid", beacon.getBeaconValue(BeaconValueIndex.MinewBeaconValueIndex_UUID).getStringValue());
-
-            //In Range
-            jo.put("range", beaconInRange);
-
-            //mac
-            jo.put("mac", beacon.getBeaconValue(BeaconValueIndex.MinewBeaconValueIndex_MAC).getStringValue());
-
-            //name
-            jo.put("name", beacon.getBeaconValue(BeaconValueIndex.MinewBeaconValueIndex_Name).getStringValue());
-
-            //major
-            jo.put("major", beacon.getBeaconValue(BeaconValueIndex.MinewBeaconValueIndex_Major).getStringValue());
-
-            //minor
-            jo.put("minor", beacon.getBeaconValue(BeaconValueIndex.MinewBeaconValueIndex_Minor).getStringValue());
-
-            //battery
-            jo.put("battery", beacon.getBeaconValue(BeaconValueIndex.MinewBeaconValueIndex_BatteryLevel).getIntValue());
-
-            //timestamp
-            jo.put("timeStamp", DateFormat.format("dd-MM-yyyy HH:mm:ss", new Date()));
-
-
-
-        } catch (Exception e) {
-
-        }
-
-        return jo;
     }
 
     private void sendError(String message) {
@@ -344,62 +189,6 @@ public class WristbandsPlugin extends CordovaPlugin {
         if (isScanning) {
             mMinewBeaconManager.stopScan();
         }
-    }
-
-
-    void scheduledTimer(){
-        new Timer().scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                JSONObject jo = new JSONObject();
-                try {
-                    //UUID address
-                    jo.put("uuid", trackedUUID);
-
-                    //In Range
-                    jo.put("range", beaconInRange);
-
-                    //major
-                    jo.put("major", trackedMajor);
-
-                    //minor
-                    jo.put("minor", trackedMinor);
-
-                    //timestamp
-                    jo.put("timeStamp", DateFormat.format("dd-MM-yyyy HH:mm:ss", new Date()));
-
-                    URL url = new URL(postURL);
-                    HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-                    try {
-                        urlConnection.setDoOutput(true);
-                        urlConnection.setChunkedStreamingMode(0);
-                        urlConnection.setRequestProperty("Content-Type", "application/json; utf-8");
-                        
-                        //OutputStream out = new BufferedOutputStream(urlConnection.getOutputStream());
-                        try(OutputStream os = urlConnection.getOutputStream()) {
-                            byte[] input = returnJSONParameters.toString(2).getBytes("utf-8");
-                            os.write(input, 0, input.length);
-                        }
-
-                        try(BufferedReader br = new BufferedReader(
-                                new InputStreamReader(urlConnection.getInputStream(), "utf-8"))) {
-                            StringBuilder response = new StringBuilder();
-                            String responseLine = null;
-                            while ((responseLine = br.readLine()) != null) {
-                                response.append(responseLine.trim());
-                            }
-                            System.out.println(response.toString());
-                        }
-
-                    } finally {
-                        urlConnection.disconnect();
-                    }
-
-                } catch (Exception e) {
-
-                }
-            }
-        }, 0,this.timerString * 1000);//put here time 1000 milliseconds=1 second
     }
 
     /**
