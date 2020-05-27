@@ -46,6 +46,7 @@ public class WristbandsPlugin extends CordovaPlugin {
     private String postURL;
     private int timerString;
     private JSONObject returnJSONParameters;
+    BroadcastReceiver broadcastReceiver;
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
@@ -118,14 +119,14 @@ public class WristbandsPlugin extends CordovaPlugin {
         else {
 
             IntentFilter filter = new IntentFilter(ACTION_STRING_ACTIVITY);
-            BroadcastReceiver receiver = new BroadcastReceiver() {
+            broadcastReceiver = new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context context, Intent intent) {
                     String value =  intent.getExtras().getString("beaconData");
                     sendSuccess(value);
                 }
             };
-            cordova.getActivity().registerReceiver(receiver, filter);
+            cordova.getActivity().registerReceiver(broadcastReceiver, filter);
 
             Log.d("WristbandsPlugin", "setDevice called!");
             initManager();
@@ -185,6 +186,9 @@ public class WristbandsPlugin extends CordovaPlugin {
 
         if (isScanning) {
             mMinewBeaconManager.stopScan();
+        }
+        if (broadcastReceiver != null){
+            cordova.getActivity().unregisterReceiver(broadcastReceiver);
         }
     }
 
