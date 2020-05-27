@@ -39,7 +39,7 @@ public class WristbandsService extends Service {
     private JSONObject returnJSONParameters;
 
     //Strings to register to create intent filter for registering the recivers
-    private static final String ACTION_STRING_ACTIVITY = "ToActivity";
+    private static final String ACTION_STRING_TO_ACTIVITY = "ToActivity";
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -48,6 +48,8 @@ public class WristbandsService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+
+        Log.d("WristbandsPlugin", "onStartCommand called!");
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         trackedUUID = preferences.getString("trackedUUID", "");
@@ -89,7 +91,7 @@ public class WristbandsService extends Service {
     }
 
     private void setDelegate() {
-        Log.d("wristband", "setDevice!");
+        Log.d("wristband", "setDelegate called!");
 
         mMinewBeaconManager.setMinewbeaconManagerListener(new MinewBeaconManagerListener() {
 
@@ -157,7 +159,7 @@ public class WristbandsService extends Service {
                         String beaconData = returnJSONParameters.toString();
                         Log.d("wristband", "onRangeBeacons" + beaconData);
 
-                        Intent intent = new Intent(ACTION_STRING_ACTIVITY);
+                        Intent intent = new Intent(ACTION_STRING_TO_ACTIVITY);
                         intent.putExtra("beaconData",beaconData);
                         sendBroadcast(intent);
                     }
@@ -229,53 +231,53 @@ public class WristbandsService extends Service {
         new Timer().scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                JSONObject jo = new JSONObject();
+            JSONObject jo = new JSONObject();
+            try {
+                //UUID address
+                jo.put("uuid", trackedUUID);
+
+                //In Range
+                jo.put("range", beaconInRange);
+
+                //major
+                jo.put("major", trackedMajor);
+
+                //minor
+                jo.put("minor", trackedMinor);
+
+                //timestamp
+                jo.put("timeStamp", DateFormat.format("dd-MM-yyyy HH:mm:ss", new Date()));
+
+                URL url = new URL(postURL);
+                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
                 try {
-                    //UUID address
-                    jo.put("uuid", trackedUUID);
+                    urlConnection.setDoOutput(true);
+                    urlConnection.setChunkedStreamingMode(0);
+                    urlConnection.setRequestProperty("Content-Type", "application/json; utf-8");
 
-                    //In Range
-                    jo.put("range", beaconInRange);
-
-                    //major
-                    jo.put("major", trackedMajor);
-
-                    //minor
-                    jo.put("minor", trackedMinor);
-
-                    //timestamp
-                    jo.put("timeStamp", DateFormat.format("dd-MM-yyyy HH:mm:ss", new Date()));
-
-                    URL url = new URL(postURL);
-                    HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-                    try {
-                        urlConnection.setDoOutput(true);
-                        urlConnection.setChunkedStreamingMode(0);
-                        urlConnection.setRequestProperty("Content-Type", "application/json; utf-8");
-
-                        //OutputStream out = new BufferedOutputStream(urlConnection.getOutputStream());
-                        try(OutputStream os = urlConnection.getOutputStream()) {
-                            byte[] input = returnJSONParameters.toString(2).getBytes("utf-8");
-                            os.write(input, 0, input.length);
-                        }
-
-                        try(BufferedReader br = new BufferedReader(
-                                new InputStreamReader(urlConnection.getInputStream(), "utf-8"))) {
-                            StringBuilder response = new StringBuilder();
-                            String responseLine = null;
-                            while ((responseLine = br.readLine()) != null) {
-                                response.append(responseLine.trim());
-                            }
-                            System.out.println(response.toString());
-                        }
-
-                    } finally {
-                        urlConnection.disconnect();
+                    //OutputStream out = new BufferedOutputStream(urlConnection.getOutputStream());
+                    try(OutputStream os = urlConnection.getOutputStream()) {
+                        byte[] input = returnJSONParameters.toString(2).getBytes("utf-8");
+                        os.write(input, 0, input.length);
                     }
 
-                } catch (Exception e) {
+                    try(BufferedReader br = new BufferedReader(
+                            new InputStreamReader(urlConnection.getInputStream(), "utf-8"))) {
+                        StringBuilder response = new StringBuilder();
+                        String responseLine = null;
+                        while ((responseLine = br.readLine()) != null) {
+                            response.append(responseLine.trim());
+                        }
+                        System.out.println(response.toString());
+                    }
 
+                } finally {
+                    urlConnection.disconnect();
                 }
+
+            } catch (Exception e) {
+
+            }
             }
         }, 0,this.timerString * 1000);//put here time 1000 milliseconds=1 second
     }

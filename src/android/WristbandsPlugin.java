@@ -113,19 +113,21 @@ public class WristbandsPlugin extends CordovaPlugin {
 
     private void setDevice(){
 
-        IntentFilter filter = new IntentFilter(ACTION_STRING_ACTIVITY);
-        BroadcastReceiver receiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                String value =  intent.getExtras().getString("beaconData");
-                sendSuccess(value);
-            }
-        };
-        cordova.getActivity().registerReceiver(receiver, filter);
-
         if (!hasLocationPermissions() || !hasBluetoothPermissions() )
             requestNeededPermissions();
         else {
+
+            IntentFilter filter = new IntentFilter(ACTION_STRING_ACTIVITY);
+            BroadcastReceiver receiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    String value =  intent.getExtras().getString("beaconData");
+                    sendSuccess(value);
+                }
+            };
+            cordova.getActivity().registerReceiver(receiver, filter);
+
+            Log.d("WristbandsPlugin", "setDevice called!");
             initManager();
 
             //Set preferences to be used by the WristbandsSerice
