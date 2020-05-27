@@ -65,7 +65,7 @@
         </config-file>
 
         <config-file parent="/manifest/application" target="AndroidManifest.xml">
-            <service android:name="com.cordova.plugin.wristbands.WristbandsService" />
+            <service android:name="com.cordova.plugin.wristbands.WristbandsService" android:exported="false" />
         </config-file>
 
         <source-file src="src/android/WristbandsPlugin.java" target-dir="src/com/cordova/plugin/wristbands" />
