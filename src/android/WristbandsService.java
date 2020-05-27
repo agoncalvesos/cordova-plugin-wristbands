@@ -232,23 +232,7 @@ public class WristbandsService extends Service {
         new Timer().scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-            JSONObject jo = new JSONObject();
             try {
-                //UUID address
-                jo.put("uuid", trackedUUID);
-
-                //In Range
-                jo.put("range", beaconInRange);
-
-                //major
-                jo.put("major", trackedMajor);
-
-                //minor
-                jo.put("minor", trackedMinor);
-
-                //timestamp
-                jo.put("timeStamp", DateFormat.format("dd-MM-yyyy HH:mm:ss", new Date()));
-
                 URL url = new URL(postURL);
                 HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
                 try {
