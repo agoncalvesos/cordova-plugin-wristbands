@@ -155,6 +155,7 @@ public class WristbandsService extends Service {
 
 
                     if (trackedUUID.equals(uuid) && trackedMajor.equals(major) && trackedMinor.equals(minor)){
+                        beaconInRange = true;
                         returnJSONParameters = beaconToJSONObject(beacon);
                         String beaconData = returnJSONParameters.toString();
                         Log.d("wristband", "onRangeBeacons" + beaconData);
