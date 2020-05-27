@@ -46,7 +46,6 @@ public class WristbandsPlugin extends CordovaPlugin {
     private String postURL;
     private int timerString;
     private JSONObject returnJSONParameters;
-    //private Shared Core;
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
@@ -102,9 +101,9 @@ public class WristbandsPlugin extends CordovaPlugin {
                 setDevice();
             }
             else if (wristbandCommand.equals("start")){
-                //startScan(); //TODO
+                mMinewBeaconManager.startScan();
             } else if (wristbandCommand.equals("stop")){
-                //stopScan(); //TODO
+                mMinewBeaconManager.stopScan();
             }
 
             return true;
@@ -128,9 +127,6 @@ public class WristbandsPlugin extends CordovaPlugin {
             requestNeededPermissions();
         else {
             initManager();
-
-            //Core = new Shared(mMinewBeaconManager, trackedUUID, trackedMajor, trackedMinor, postURL, timerString);
-            //Core.setDevice();
 
             //Set preferences to be used by the WristbandsSerice
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(cordova.getContext());;
@@ -165,7 +161,6 @@ public class WristbandsPlugin extends CordovaPlugin {
         PluginResult result = new PluginResult(PluginResult.Status.OK, message);
         result.setKeepCallback(true);
         callbackContext.sendPluginResult(result);
-        //callbackContext.success(message);
     }
 
     private void showBLEDialog() {

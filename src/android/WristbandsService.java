@@ -1,10 +1,7 @@
 package com.cordova.plugin.wristbands;
 
 import android.app.Service;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
@@ -42,41 +39,10 @@ public class WristbandsService extends Service {
     private JSONObject returnJSONParameters;
 
     //Strings to register to create intent filter for registering the recivers
-    private static final String ACTION_STRING_SERVICE = "ToService";
     private static final String ACTION_STRING_ACTIVITY = "ToActivity";
-
-    /*private BroadcastReceiver serviceReceiver = new BroadcastReceiver() {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            //Toast.makeText(getApplicationContext(), "received message in service..!", Toast.LENGTH_SHORT).show();
-            Log.d("Service", "Sending broadcast to activity");
-            sendBroadcast();
-        }
-    };
-
-    private void sendBroadcast() {
-        Intent new_intent = new Intent();
-        new_intent.setAction(ACTION_STRING_ACTIVITY);
-        sendBroadcast(new_intent);
-    }*/
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        /*if (serviceReceiver != null) {
-            //Create an intent filter to listen to the broadcast sent with the action "ACTION_STRING_SERVICE"
-            IntentFilter intentFilter = new IntentFilter(ACTION_STRING_SERVICE);
-            //Map the intent filter to the receiver
-            registerReceiver(serviceReceiver, intentFilter);
-        }*/
-    }
 
     @Override
     public IBinder onBind(Intent intent) {
-
-        Log.d("WristbandsService", "onStartCommand!");
-
         return null;
     }
 
@@ -91,11 +57,7 @@ public class WristbandsService extends Service {
         timerString = preferences.getInt("timerString", 10);
 
         mMinewBeaconManager = MinewBeaconManager.getInstance(this);
-        /*Shared Core = Shared.getInstance();
-        Core.init(trackedUUID, trackedMajor, trackedMinor, postURL, timerString);*/
-        //Shared Core = new Shared(MinewBeaconManager.getInstance(this), trackedUUID, trackedMajor, trackedMinor, postURL, timerString);
 
-        //Core.setDevice();
         setDevice();
 
         return super.onStartCommand(intent, flags, startId);
@@ -262,11 +224,6 @@ public class WristbandsService extends Service {
 
         return jo;
     }
-
-    /*private void showBLEDialog() {
-        Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-        cordova.getActivity().startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
-    }*/
 
     void scheduledTimer(){
         new Timer().scheduleAtFixedRate(new TimerTask() {
