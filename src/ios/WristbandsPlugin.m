@@ -160,7 +160,7 @@
     [[UIApplication sharedApplication] registerForRemoteNotifications]; // you can also set here for local notification.
 
 
-    UNMutableNotificationContent* content = [[UNMutableNotificationContent alloc] init];
+    /*UNMutableNotificationContent* content = [[UNMutableNotificationContent alloc] init];
     content.title = [NSString localizedUserNotificationStringForKey:@"WOHOOO! 😎" arguments:nil];
     content.body = [NSString localizedUserNotificationStringForKey:@"The set delegate Method got fired!"
                 arguments:nil];
@@ -170,11 +170,11 @@
     UNTimeIntervalNotificationTrigger* trigger = [UNTimeIntervalNotificationTrigger
                 triggerWithTimeInterval:1 repeats:NO];
     /*UNNotificationRequest* request = [UNNotificationRequest requestWithIdentifier:@"setDelegateAlert"
-                content:content trigger:trigger];*/
+                content:content trigger:trigger];
 
     // Schedule the notification.
     UNUserNotificationCenter* notificationCenter = [UNUserNotificationCenter currentNotificationCenter];
-    [notificationCenter addNotificationRequest:request withCompletionHandler:nil];
+    [notificationCenter addNotificationRequest:request withCompletionHandler:nil];*/
     
     self.pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"iOS SDK Delegate initialized"];
     [self.pluginResult setKeepCallbackAsBool:YES];
