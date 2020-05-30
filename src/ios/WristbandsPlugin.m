@@ -169,8 +169,8 @@
     // Deliver the notification
     UNTimeIntervalNotificationTrigger* trigger = [UNTimeIntervalNotificationTrigger
                 triggerWithTimeInterval:1 repeats:NO];
-    UNNotificationRequest* request = [UNNotificationRequest requestWithIdentifier:@"setDelegateAlert"
-                content:content trigger:trigger];
+    /*UNNotificationRequest* request = [UNNotificationRequest requestWithIdentifier:@"setDelegateAlert"
+                content:content trigger:trigger];*/
 
     // Schedule the notification.
     UNUserNotificationCenter* notificationCenter = [UNUserNotificationCenter currentNotificationCenter];
