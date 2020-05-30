@@ -29,7 +29,6 @@ public class WristbandsService extends Service {
 
     private MinewBeaconManager mMinewBeaconManager;
     private boolean isScanning;
-    private boolean beaconInRange;
 
     private String trackedUUID;
     private String trackedMajor;
@@ -66,6 +65,7 @@ public class WristbandsService extends Service {
     }
 
     private void setDevice(){
+        returnJSONParameters = beaconToJSONObject(getDefaultBeacon());
 
         setDelegate();
 
@@ -90,6 +90,19 @@ public class WristbandsService extends Service {
         }
     }
 
+    private MinewBeacon getDefaultBeacon(){
+        MinewBeacon beacon = new MinewBeacon();
+        //fill beacon with the data that we have
+        beacon.setUuid(trackedUUID);
+        beacon.setMajor(trackedMajor);
+        beacon.setMinor(trackedMinor);
+
+        //reset json
+        returnJSONParameters = beaconToJSONObject(beacon);
+
+        return beacon;
+    }
+
     private void setDelegate() {
         Log.d("wristband", "setDelegate called!");
 
@@ -111,7 +124,7 @@ public class WristbandsService extends Service {
 
 
                     if (trackedUUID.equals(uuid) && trackedMajor.equals(major) && trackedMinor.equals(minor)){
-                        beaconInRange = true;
+                        Log.d("wristband", "beacon in range!");
                     }
                 }
             }
@@ -133,7 +146,7 @@ public class WristbandsService extends Service {
 
 
                     if (trackedUUID.equals(uuid) && trackedMajor.equals(major) && trackedMinor.equals(minor)){
-                        beaconInRange = false;
+                        Log.d("wristband", "beacon not in range!");
                     }
                 }
             }
@@ -155,7 +168,8 @@ public class WristbandsService extends Service {
 
 
                     if (trackedUUID.equals(uuid) && trackedMajor.equals(major) && trackedMinor.equals(minor)){
-                        beaconInRange = true;
+
+                        Log.d("wristband", "beacon in range!");
                         returnJSONParameters = beaconToJSONObject(beacon);
                         String beaconData = returnJSONParameters.toString();
                         Log.d("wristband", "onRangeBeacons" + beaconData);
@@ -175,7 +189,6 @@ public class WristbandsService extends Service {
                         break;
                     case BluetoothStatePowerOff:
                         //Toast.makeText(cordova.getContext(), "BluetoothStatePowerOff", Toast.LENGTH_SHORT).show();
-                        beaconInRange = false;
                         break;
                 }
             }
@@ -199,7 +212,7 @@ public class WristbandsService extends Service {
             jo.put("uuid", beacon.getUuid());
 
             //In Range
-            jo.put("range", beaconInRange);
+            jo.put("range", beacon.isInRange());
 
             //mac
             jo.put("mac", beacon.getMacAddress());
@@ -232,37 +245,41 @@ public class WristbandsService extends Service {
         new Timer().scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-            try {
-                URL url = new URL(postURL);
-                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
                 try {
-                    urlConnection.setDoOutput(true);
-                    urlConnection.setChunkedStreamingMode(0);
-                    urlConnection.setRequestProperty("Content-Type", "application/json; utf-8");
 
-                    //OutputStream out = new BufferedOutputStream(urlConnection.getOutputStream());
-                    try(OutputStream os = urlConnection.getOutputStream()) {
-                        byte[] input = returnJSONParameters.toString(2).getBytes("utf-8");
-                        os.write(input, 0, input.length);
-                    }
+                    URL url = new URL(postURL);
+                    HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+                    try {
+                        urlConnection.setDoOutput(true);
+                        urlConnection.setChunkedStreamingMode(0);
+                        urlConnection.setRequestProperty("Content-Type", "application/json; utf-8");
 
-                    try(BufferedReader br = new BufferedReader(
-                            new InputStreamReader(urlConnection.getInputStream(), "utf-8"))) {
-                        StringBuilder response = new StringBuilder();
-                        String responseLine = null;
-                        while ((responseLine = br.readLine()) != null) {
-                            response.append(responseLine.trim());
+                        //OutputStream out = new BufferedOutputStream(urlConnection.getOutputStream());
+                        try(OutputStream os = urlConnection.getOutputStream()) {
+                            byte[] input = returnJSONParameters.toString(2).getBytes("utf-8");
+                            os.write(input, 0, input.length);
                         }
-                        System.out.println(response.toString());
+
+                        try(BufferedReader br = new BufferedReader(
+                                new InputStreamReader(urlConnection.getInputStream(), "utf-8"))) {
+                            StringBuilder response = new StringBuilder();
+                            String responseLine = null;
+                            while ((responseLine = br.readLine()) != null) {
+                                response.append(responseLine.trim());
+                            }
+                            System.out.println(response.toString());
+                        }
+
+                    } finally {
+                        urlConnection.disconnect();
+
+                        //reset old data
+                        getDefaultBeacon();
                     }
 
-                } finally {
-                    urlConnection.disconnect();
+                } catch (Exception e) {
+                    Log.d("WristbandsService", e.getMessage());
                 }
-
-            } catch (Exception e) {
-
-            }
             }
         }, 0,this.timerString * 1000);//put here time 1000 milliseconds=1 second
     }
